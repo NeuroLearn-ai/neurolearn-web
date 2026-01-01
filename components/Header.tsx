@@ -72,20 +72,21 @@ export function Header() {
         {/* RIGHT: Actions (Dynamic) */}
         <div className="flex items-center gap-4">
 
-          {/* THEME SWITCHER UI */}
-          <div className="flex items-center gap-2">
-            {/* Sun Icon (Decorational) */}
-            <Sun size={16} className={`transition-colors ${isDarkMode ? "text-text-muted" : "text-primary"}`} />
-            
-            {/* The Generic Switch */}
-            <Switch 
-              checked={isDarkMode} 
-              onCheckedChange={toggleTheme} 
-            />
-            
-            {/* Moon Icon (Decorational) */}
-            <Moon size={16} className={`transition-colors ${isDarkMode ? "text-primary" : "text-text-muted"}`} />
-          </div>
+          {isMounted && (
+            <div className="flex items-center gap-2">
+              {/* Sun Icon (Decorational) */}
+              <Sun size={16} className={`transition-colors ${isDarkMode ? "text-text-muted" : "text-primary"}`} />
+              
+              {/* The Generic Switch */}
+              <Switch 
+                checked={isDarkMode} 
+                onCheckedChange={toggleTheme} 
+              />
+              
+              {/* Moon Icon (Decorational) */}
+              <Moon size={16} className={`transition-colors ${isDarkMode ? "text-primary" : "text-text-muted"}`} />
+            </div>
+          )}
           
           {/* 4. SKELETON STATE: Show this while checking localStorage */}
           {!isMounted ? (

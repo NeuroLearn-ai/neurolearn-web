@@ -21,7 +21,7 @@ function LoginForm() {
   const isRegisterMode = searchParams.get("mode") === "register";
   
   // State
-  const [isLogin, setIsLogin] = useState(!isRegisterMode); // Default to true unless mode=register
+  const [isLogin, setIsLogin] = useState(!isRegisterMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,13 +35,13 @@ function LoginForm() {
 
     try {
       if (isLogin) {
-        // --- LOGIN LOGIC ---
+        // --- LOGIN LOGIC (Unchanged) ---
         const formData = new URLSearchParams();
         formData.append("username", email);
         formData.append("password", password);
 
         const res = await fetch(`${backendURL}/auth/login`, {
-          credentials: "include", // <-- Important (for cookies
+          credentials: "include",
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData,
@@ -53,11 +53,10 @@ function LoginForm() {
         }
 
         const data = await res.json();
-        
         login(data.access_token);
 
       } else {
-        // --- REGISTER LOGIC ---
+        // --- REGISTER LOGIC (Updated) ---
         const res = await fetch(`${backendURL}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -66,7 +65,24 @@ function LoginForm() {
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.detail || "Registration failed");
+          const errorMsg = data.detail || "";
+
+          // 👇 FIXED: Use .includes() for safer matching
+          if (errorMsg.includes("already registered")) {
+            setError("Account exists! Switching you to Log In...");
+            
+            // Wait 1.5s then switch tabs
+            setTimeout(() => {
+              setIsLogin(true); // Switch to Login Tab
+              setError("");     // Clear the error message
+              setPassword("");  // Clear password for security (keep email)
+            }, 1500);
+            
+            return; // <--- Stop here! Don't throw an error.
+          }
+          
+          // Only throw if it's a REAL error (not just a duplicate user)
+          throw new Error(errorMsg || "Registration failed");
         }
 
         alert("Account created! Please log in.");
@@ -75,6 +91,8 @@ function LoginForm() {
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
+      } else {
+        setError("An unknown error occurred");
       }
     } finally {
       setLoading(false);
@@ -93,12 +111,14 @@ function LoginForm() {
       </div>
 
       <div className="space-y-6">
-        <a href={`${backendURL}auth/login/google`} className="block w-full">
-          <Button variant="outline" type="button" className="w-full justify-center py-4 border-gray-600 hover:bg-gray-700 text-white" icon={<span>G</span>}>
+        {/* Google OAuth Login */}
+        <a href={`${backendURL}/auth/login/google`} className="block w-full">
+          <Button variant="outline" type="button" className="w-full justify-center py-4 border-gray-600 hover:bg-gray-700 text-main" icon={<span>G</span>}>
             Continue with Google
           </Button>
         </a>
 
+        {/* Normal Email/Password Login */}
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-[var(--border)]"></span>

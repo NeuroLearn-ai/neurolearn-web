@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-main text-main">
       <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
         NeuroLearn
       </h1>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { AuthProvider } from "@/context/AuthContext";
-import { ThemeContext } from "@/context/ThemeContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
   title: "NeuroLearn",
@@ -19,15 +19,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col">
         <AuthProvider>
-          <ThemeContext>
-            {/* 1. Header - (on every page) */}
-            <Header /> 
-            
-            {/* 2. Main Content */}
-            <div className="flex-1">
-              {children}
-            </div>
-          </ThemeContext>
+          <ThemeProvider>
+            <Header />      
+              <div className="flex-1">
+                {children}
+              </div>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

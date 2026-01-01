@@ -1,43 +1,36 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
-function TokenHandler() {
-  const router = useRouter();
+export default function GoogleSuccessPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { login } = useAuth();
 
   useEffect(() => {
-    // 1. Get token from URL (sent by backend)
+    // 1. Grab the token from the URL (sent by backend)
     const token = searchParams.get("token");
 
     if (token) {
-      // 2. Save it to LocalStorage (The browser's pocket)
-      localStorage.setItem("token", token);
-      
-      // 3. Redirect to the Dashboard
-      router.push("/dashboard");
+      // 2. Log the user in using our AuthContext
+      // This saves it to localStorage and fetches the user data
+      login(token)
+        .catch((err) => {
+            console.error("Failed to verify Google token", err);
+            router.push("/login?error=google_failed");
+        });
     } else {
-      // If no token, something went wrong
-      router.push("/login?error=auth_failed");
+      // If no token found, something went wrong
+      router.push("/login?error=no_token");
     }
-  }, [router, searchParams]);
+  }, [searchParams, login, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
-      <div className="animate-pulse flex flex-col items-center">
-        <div className="h-12 w-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mb-4"></div>
-        <p className="text-xl">Finalizing Secure Login...</p>
-      </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--bg-main)]">
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent"></div>
+      <p className="mt-4 text-[var(--text-muted)]">Finalizing secure login...</p>
     </div>
-  );
-}
-
-// Next.js requires us to wrap useSearchParams in Suspense
-export default function GoogleSuccessPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TokenHandler />
-    </Suspense>
   );
 }

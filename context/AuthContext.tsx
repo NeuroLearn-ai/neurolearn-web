@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -12,7 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string) => void;
+  login: (token: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -25,56 +25,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  // 1. Check Token on Load
+  // 1. Wrap fetchUser in useCallback so it stays stable
+  const fetchUser = useCallback(async (token: string) => {
+    try {
+      const res = await fetch(`${backendURL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem("token");
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Auth check failed", error);
+      setUser(null);
+    }
+  }, [backendURL]);
+
+  // 2. Initial Load Check
   useEffect(() => {
-    async function checkAuth() {
+    async function initAuth() {
       const token = localStorage.getItem("token");
-      
       if (!token) {
         setLoading(false);
         return;
       }
-
-      try {
-        // Validate with Backend
-        const res = await fetch(`${backendURL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-          const userData = await res.json();
-          setUser(userData);
-        } else {
-          // Token invalid/expired
-          localStorage.removeItem("token");
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Auth check failed", error);
-      } finally {
-        setLoading(false);
-      }
+      await fetchUser(token);
+      setLoading(false);
     }
 
-    checkAuth();
-  }, [backendURL]);
+    initAuth();
+  }, [fetchUser]); // Depend on the stable fetchUser
 
-  // 2. Login Helper
-  const login = (token: string) => {
+  // 3. Wrap login in useCallback so it doesn't trigger loops
+  const login = useCallback(async (token: string) => {
     localStorage.setItem("token", token);
-    // We could fetch user details here immediately, 
-    // but for now let's just reload or redirect
+    await fetchUser(token);
     router.push("/dashboard");
     router.refresh(); 
-  };
+  }, [fetchUser, router]); // Only changes if fetchUser or router changes
 
-  // 3. Logout Helper
-  const logout = () => {
+  // 4. Wrap logout in useCallback
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
     router.push("/login");
     router.refresh();
-  };
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
@@ -83,7 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom Hook for easy access
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
