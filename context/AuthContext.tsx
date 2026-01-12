@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 interface User {
   id: number;
   email: string;
+  name?: string;
+  avatar_url?: string;
   provider: string;
 }
 
@@ -14,6 +16,8 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
+  authFetch: (endpoint: string, options?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 1. Wrap fetchUser in useCallback so it stays stable
   const fetchUser = useCallback(async (token: string) => {
     try {
-      const res = await fetch(`${backendURL}/auth/me`, {
+      const res = await fetch(`${backendURL}/user/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

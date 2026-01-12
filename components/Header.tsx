@@ -3,19 +3,30 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, User, LogOut, Settings, Plus, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/Switch";
+import { useAuth } from "@/context/AuthContext"; // Import context
 
 export function Header() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  
+  // 1. Get everything from AuthContext
+  const { user, logout } = useAuth(); 
+  
+  // 2. Simple Boolean for UI checks
+  const isLoggedIn = !!user;
+
+  // 3. Hydration Fix (Prevent "Text content does not match" error)
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
 
   const isDarkMode = theme === "dark";
 
@@ -23,36 +34,14 @@ export function Header() {
     setTheme(checked ? "dark" : "light");
   }
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userLoggedIn = !!token;
-
-    if (isLoggedIn !== userLoggedIn) {
-      setIsLoggedIn(userLoggedIn);
-    }
-    
-    // We explicitly ignore 'isLoggedIn' dependency to prevent loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  function handleLogout() {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    router.push("/login");
-    router.refresh();
-  }
-
+  // Don't show header on login page
   if (pathname === "/login") return null;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-header/95 backdrop-blur-md text-text-header transition-colors duration-300">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         
-        {/* LEFT: Logo (Static - Always shows) */}
+        {/* LEFT: Logo */}
         <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-3 hover:opacity-80 transition">
           <div className="relative h-15 w-15">
             <Image 
@@ -69,32 +58,27 @@ export function Header() {
           </span>
         </Link>
 
-        {/* RIGHT: Actions (Dynamic) */}
+        {/* RIGHT: Actions */}
         <div className="flex items-center gap-4">
 
+          {/* Theme Switcher (Only show after mount to avoid hydration mismatch) */}
           {isMounted && (
             <div className="flex items-center gap-2">
-              {/* Sun Icon (Decorational) */}
               <Sun size={16} className={`transition-colors ${isDarkMode ? "text-text-muted" : "text-primary"}`} />
-              
-              {/* The Generic Switch */}
               <Switch 
                 checked={isDarkMode} 
                 onCheckedChange={toggleTheme} 
               />
-              
-              {/* Moon Icon (Decorational) */}
               <Moon size={16} className={`transition-colors ${isDarkMode ? "text-primary" : "text-text-muted"}`} />
             </div>
           )}
           
-          {/* 4. SKELETON STATE: Show this while checking localStorage */}
+          {/* Auth Buttons */}
           {!isMounted ? (
+            // Skeleton Loader while checking auth
             <div className="flex items-center gap-4 animate-pulse">
-              {/* Fake Button */}
-              <div className="h-9 w-24 rounded-lg bg-card border border-border" />
-              {/* Fake Avatar */}
-              <div className="h-8 w-16 rounded-full bg-card border border-border" />
+              <div className="h-9 w-24 rounded-lg bg-white/10" />
+              <div className="h-8 w-8 rounded-full bg-white/10" />
             </div>
           ) : isLoggedIn ? (
             // --- LOGGED IN VIEW ---
@@ -105,7 +89,7 @@ export function Header() {
                 </Button>
               </Link>
 
-              <button className="relative rounded-full p-2 text-text-muted hover:bg-card hover:text-primary transition">
+              <button className="relative rounded-full p-2 text-text-muted hover:bg-white/10 hover:text-primary transition">
                 <Bell size={20} />
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
               </button>
@@ -113,25 +97,27 @@ export function Header() {
               <Dropdown 
                 align="right"
                 trigger={
-                  <div className="flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-1 hover:border-primary/50 transition cursor-pointer">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
-                      ME
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-white/5 pl-1 pr-3 py-1 hover:border-primary/50 transition cursor-pointer">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+                      {/* Show user initial if available, else 'ME' */}
+                      {user?.email?.[0] || "ME"}
                     </div>
                     <ChevronDown size={14} className="text-text-muted" />
                   </div>
                 }
               >
                 <div className="px-3 py-2 text-xs text-text-muted border-b border-border/50 mb-1">
-                  My Account
+                  {user?.email}
                 </div>
-                <DropdownItem href="/dashboard/profile">
+                <DropdownItem href="/profile">
                   <User size={14} /> Profile
                 </DropdownItem>
-                <DropdownItem href="/dashboard/settings">
+                <DropdownItem href="/settings">
                   <Settings size={14} /> Settings
                 </DropdownItem>
                 <div className="h-px bg-border/50 my-1" />
-                <DropdownItem onClick={handleLogout} danger>
+                {/* 👇 Use the logout function from Context */}
+                <DropdownItem onClick={logout} danger>
                   <LogOut size={14} /> Logout
                 </DropdownItem>
               </Dropdown>
@@ -139,7 +125,7 @@ export function Header() {
           ) : (
             // --- LOGGED OUT VIEW ---
             <>
-              <Link href="/login" className="text-sm font-medium text-text-muted hover:text-text-main transition">
+              <Link href="/login" className="text-sm font-medium text-text-muted hover:text-text-header transition">
                 Sign In
               </Link>
               <Link href="/login?mode=register">
