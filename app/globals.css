@@ -17,7 +17,8 @@
 /* 2. LIGHT Mode Values */
 :root {
   /* BODY: Clean Light Background (Fixes your issue) */
-  --bg-main: #f8fafc;       
+  --bg-main: #f8fafc;  
+  --bg-secondary: #e2e8f0;     
   --bg-card: #ffffff;
   
   /* HEADER: Dark Slate (So the white Logo pops!) */
@@ -38,7 +39,8 @@
 /* 3. DARK Mode Values */
 .dark {
   /* BODY: Deep Dark Background */
-  --bg-main: #020617;       
+  --bg-main: #020617;
+  --bg-secondary: #0a1322;     
   --bg-card: #0f172a;      
 
   /* HEADER: Slightly different dark shade or same as body */

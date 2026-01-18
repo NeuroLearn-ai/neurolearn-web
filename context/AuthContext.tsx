@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  // 1. Wrap fetchUser in useCallback so it stays stable
   const fetchUser = useCallback(async (token: string) => {
     try {
       const res = await fetch(`${backendURL}/user/me`, {
@@ -49,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [backendURL]);
 
-  // 2. Initial Load Check
   useEffect(() => {
     async function initAuth() {
       const token = localStorage.getItem("token");
@@ -62,26 +60,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     initAuth();
-  }, [fetchUser]); // Depend on the stable fetchUser
+  }, [fetchUser]);
 
-  // 3. Wrap login in useCallback so it doesn't trigger loops
   const login = useCallback(async (token: string) => {
     localStorage.setItem("token", token);
     await fetchUser(token);
     router.push("/dashboard");
     router.refresh(); 
-  }, [fetchUser, router]); // Only changes if fetchUser or router changes
+  }, [fetchUser, router]);
 
-  // 4. Wrap logout in useCallback
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     setUser(null);
-    router.push("/login");
+    router.push("/");
     router.refresh();
   }, [router]);
 
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (token) await fetchUser(token);
+  }, [fetchUser]);
+
+  // Authenticated fetch wrapper ( can be used for API calls requiring auth )
+  const authFetch = useCallback(async (endpoint: string, options: RequestInit = {}) => {
+    const token = localStorage.getItem("token");
+    const headers = {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+    };
+
+    return fetch(`${backendURL}${endpoint}`, { ...options, headers });
+  }, [backendURL]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, authFetch }}>
       {children}
     </AuthContext.Provider>
   );

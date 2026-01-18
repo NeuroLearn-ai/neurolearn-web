@@ -83,7 +83,7 @@ export function Header() {
           ) : isLoggedIn ? (
             // --- LOGGED IN VIEW ---
             <>
-              <Link href="/dashboard/new">
+              <Link href="/notes/create">
                 <Button variant="primary" className="hidden sm:flex h-9 px-4 text-sm" icon={<Plus size={16} />}>
                   New Note
                 </Button>

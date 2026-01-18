@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
+import { Link } from "lucide-react";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -32,9 +33,11 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-text-main">Knowledge Graph</h1>
           <p className="text-text-muted">Manage your learning nodes</p>
         </div>
-        <Button variant="primary" icon={<span>+</span>}>
-          New Note
-        </Button>
+        <Link href="/notes/create">
+          <Button variant="primary" icon={<span>+</span>}>
+            New Note
+          </Button>
+        </Link>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

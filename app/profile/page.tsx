@@ -9,9 +9,7 @@ import { User, Mail, Camera, X } from "lucide-react";
 import Image from "next/image";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  
-  // State for Edit Mode
+  const { user, authFetch, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -32,27 +30,28 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/me`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData)
-      });
-      
-      console.log("Saving data:", formData);
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setIsEditing(false);
-      // Ideally, you'd call a refreshUser() function here from AuthContext
-    } catch (error) {
-      console.error("Failed to update profile", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setIsLoading(true);
+      try {
+        const res = await authFetch("/user/me", {
+          method: "PUT",
+          body: JSON.stringify(formData)
+        });
+
+        if (!res.ok) throw new Error("Failed to save");
+
+        console.log("Saving data:", formData);
+        
+        setIsEditing(false);
+        
+        // 👇 Update the UI instantly with the new name
+        await refreshUser(); 
+
+      } catch (error) {
+        console.error("Failed to update profile", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   if (!user) return null;
 
@@ -112,7 +111,7 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isLoading}>
+                  <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>
                     <X size={16} className="mr-2" /> Cancel
                   </Button>
                   <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
@@ -154,7 +153,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <p className="text-xs text-text-muted">
-                  Email cannot be changed because you signed in with {user.provider}.
+                  Email cannot be changed.
                 </p>
               </div>
 
