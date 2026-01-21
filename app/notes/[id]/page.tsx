@@ -5,11 +5,14 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
+import DrawingCanvas from "@/components/DrawingCanvas";
+
 interface Page {
   id: number;
   page_number: number;
   background_type: string;
   background_url: string | null;
+  overlay_data: unknown;
 }
 
 interface Note {
@@ -56,20 +59,24 @@ export default function NoteViewerPage() {
         {note.pages.map((page) => (
           <div key={page.id} className="relative w-full aspect-[1/1.41] bg-white shadow-lg rounded-lg overflow-hidden border">
             
-            {/* Page Number */}
-            <span className="absolute bottom-2 right-4 text-gray-400 text-sm">
-              Page {page.page_number}
-            </span>
+            <div key={page.id} className="relative w-full aspect-[1/1.41] bg-white shadow-lg rounded-lg overflow-hidden border">
+  
+              {/* Page Number */}
+              <span className="absolute bottom-2 right-4 text-gray-400 text-sm z-30 pointer-events-none">
+                Page {page.page_number}
+              </span>
 
-            {/* Background Image (If PDF) */}
-            {page.background_type === "image" && page.background_url && (
-              // Note: We use the backend URL + the static path
-              <img 
-                src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${page.background_url}`} 
-                alt={`Page ${page.page_number}`}
-                className="w-full h-full object-contain pointer-events-none select-none"
+              {/* RENDER CANVAS LAYER */}
+              {/* We set a fixed resolution (e.g., 800x1130) for consistency, CSS scales it down */}
+              <DrawingCanvas 
+                pageId={page.id}
+                initialData={page.overlay_data} 
+                width={800} 
+                height={1131} // A4 Aspect Ratio roughly
+                bgUrl={page.background_url ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${page.background_url}` : ""}
               />
-            )}
+              
+            </div>
             
             {/* Blank Styles */}
             {page.background_type === "ruled" && (

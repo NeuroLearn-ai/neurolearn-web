@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[var(--bg-main)]">
@@ -8,10 +10,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <nav className="space-y-2">
           {/* Example Nav Items */}
-          {['Notes', 'Graph View', 'Quizzes', 'Settings'].map((item) => (
-            <div key={item} className="cursor-pointer rounded-lg px-4 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-white transition">
-              {item}
-            </div>
+          {[{name:'Notes', href:'/notes'}, {name:'Graph View', href:'/graph'}, {name:'Settings', href:'/settings'}].map((item) => (
+            <Link
+              key = {item.name}
+              href = {item.href}
+              className="block rounded-lg px-4 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-white transition"
+            >
+              {item.name}
+            </Link>
           ))}
         </nav>
       </aside>
